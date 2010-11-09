@@ -11,7 +11,7 @@ function Color(r, g, b)
 	/**
 	 * Returns a String that is used to set the color of the canvas context
 	 */
-	asCanvasRGB = function()
+	this.asCanvasRGB = function()
 	{
 		return 'rgb(' + r + ', ' + g + ', ' + b + ')';
 	}
@@ -34,6 +34,15 @@ function Point(x, y, z)
 		result.z = this.z - p.z;
 		return result;
 	}
+	
+	this.times = function(value)
+	{
+		var result = new Point();
+		result.x = this.x * value;
+		result.y = this.y * value;
+		result.z = this.z * value;
+		return result;
+	}
 }
 
 
@@ -44,51 +53,38 @@ function Point(x, y, z)
  */
 function Ray(startingPoint, directionPoint)
 {
-    this.startingPoint = startingPoint;
-    this.directionPoint = directionPoint;
-    
-    /** 
-     * Normalizes the ray (i.e. makes it so that it has length 1)
-     */
-    this.normalize = function()
-    {
-        //var distance
-    }
+	this.startingPoint = startingPoint;
+	this.directionPoint = directionPoint;
+}
+
+Ray.prototype.toString = function()
+{
+	return "startingPoint: " + this.startingPoint.x + ", " + this.startingPoint.y + ", " + this.startingPoint.z + "; direction point: " + this.directionPoint.x + ", " + this.directionPoint.y + ", " + this.directionPoint.z; 
 }
 
 /**
  * A 3D Shape that can be intersected by rays.
  */
-function Shape()
+function Shape(color)
 {
+	this.color = color;
+	
     /**
      * Gets the intersection points of a Ray on this particular Shape.
      * Returns an array of Points (the ray could intersect with the shape more than once)
      * or null if the Ray does not intersect the shape.
      */
     this.getIntersections = function(ray)
-    
 	{
-		var result = new Array();
-		result.push(new Point(1, 1, 1));
-		return result;
+		return null;
     }
 }
 
-/**
- * A shape that occurs in a ray-traceable scene.
- * Has a color so that it can be drawn on a canvas.
- */
-function RayTraceableShape(color)
-{
-    this.color = color;
-}
-
-Sphere.prototype = new RayTraceableShape();
+Sphere.prototype = new Shape();
 Sphere.prototype.constructor = Sphere;
 function Sphere(centerPoint, radius, color)
 {
-	RayTraceableShape.constructor.call(this, color);
+	//Shape.constructor.call(this, color);
 	this.centerPoint = centerPoint;
 	this.radius = radius;
 }
@@ -99,32 +95,55 @@ function Sphere(centerPoint, radius, color)
  */
 Sphere.prototype.getIntersections = function(ray)
 {
-	// TODO: check this math, what's linear algebra again? what's algebra again?
+
 	var result = new Array();
-	var a = dotProduct(ray.directionPoint, ray.directionPoint);
 	
+	// So, yeah, couldn't get it to work using vectors with dot products and stuff so, 
+	// you get the mess below this commented section
+	
+	/*var a = dotProduct(ray.directionPoint, ray.directionPoint);
+	//alert('ray in getIntersections' + ray);
 	var rayOriginMinusCenter = ray.startingPoint.minus(this.centerPoint);
-	var b = 2 * dotProduct(rayOriginMinusCenter, ray.directionPoint);
-	var c = dot(rayOriginMinusCenter, rayOriginMinusCenter) - Math.pow(this.radius, 2);
+	var b = dotProduct(rayOriginMinusCenter.times(2), ray.directionPoint);
+	var c = dotProduct(rayOriginMinusCenter, rayOriginMinusCenter) - Math.pow(this.radius, 2);*/
 	
-	try 
-	{	
-		var sqrtValue = Math.sqrt(Math.pow(b, 2) - 4 * a * c);
-		var value1 = (-b + sqrtValue) / 2 * a;
-		var value2 = (-b - sqrtValue) / 2 * a;
+	var i = ray.directionPoint.x - ray.startingPoint.x;
+	var j = ray.directionPoint.y - ray.startingPoint.y;
+	var k = ray.directionPoint.z - ray.startingPoint.z
+	
+	var a = Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2);
+	var b = 2 * i * (ray.startingPoint.x - this.centerPoint.x);
+	b += 2 * j * (ray.startingPoint.y - this.centerPoint.y);
+	b += 2 * k * (ray.startingPoint.z - this.centerPoint.z);
+	var c = Math.pow(this.centerPoint.x, 2) + Math.pow(this.centerPoint.y, 2) + Math.pow(this.centerPoint.z, 2);
+	c += Math.pow(ray.startingPoint.x, 2) + Math.pow(ray.startingPoint.y, 2) + Math.pow(ray.startingPoint.z, 2);
+	c += 2 * (-1 * this.centerPoint.x * ray.startingPoint.x - this.centerPoint.y * ray.startingPoint.y - this.centerPoint.z * ray.startingPoint.z)
+    c -= Math.pow(this.radius, 2); 
 		
-		point1 = new Point(ray.directionPoint.x * value1, ray.directionPoint.y * value1, ray.directionPoint.z * value1);
-		point2 = new Point(ray.directionPoint.x * value2, ray.directionPoint.y * value2, ray.directionPoint.z * value2);
-		
-		result.push(point1);
-		result.push(point2);
-	}
-	// we can run into issues if there are no roots for the equation, i'm not exactly sure what will happen if there are no roots
-	// probably run into imaginary numbers when trying to take sqrt of a negative	
-	catch(e)
+	log("ray to intersect = " + ray);
+	log("a = " + a + ", b = " + b + ", c = " + c);
+
+	var determinant = Math.sqrt(Math.pow(b, 2) - (4 * a * c));
+	
+	// if NaN then there are no roots
+	if (isNaN(determinant)) 
 	{
-		alert("No roots found!");
+		log("No Roots");
+		return null;
 	}
+	
+	var value1 = (-b + determinant) / (2 * a);
+	var value2 = (-b - determinant) / (2 * a);
+	
+    log("Potential roots found: t values = " + value1 + ", " + value2);
+	
+	// we're only concerned with values that are positive, negative values
+	// indicate that the ray intersects with the object in the opposite direction
+	if(value1 > 0)
+		result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value1, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value1, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value1));
+    if(value2 > 0)
+		result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value2, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value2, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value2));
+
 	return result;
 }
 
@@ -136,6 +155,7 @@ function LightSource(location)
 
 
 /**
+ * Ray traces a scene described by the supplied parameters.
  * 
  * @param {Object} viewPoint the point from which rays originate
  * @param {Object} xRange x range in cartesian "units", this is treated as a +/- value, so a value of 5 would mean x goes from -5 to 5
@@ -145,12 +165,11 @@ function LightSource(location)
  * @param {Object} canvasElementId id of the canvas element in the page on which to draw
  */
 function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElementId)
-
 {
-	this.backgroundColor = 'rgb(0, 0, 0)';
+	var bgColor = 'rgb(0, 0, 0)';
 	
     // the viewing point, or the point from which the scene will be drawn
-    this.viewPoint;
+    this.viewPoint = viewPoint;
     
     // range of x values for the scene
     this.xRange = xRange;
@@ -176,18 +195,14 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
             alert("No canvas with id " + canvasElementId + " exists");
             return;
         }        
-		
+		alert(this.objectsInScene.length);
 		var context = canvas.getContext("2d");
         context.fillStyle = "#FF0000";
         
 		// the amount each pixel changes in x and y value in cartesian space
-        var xIncrement = canvas.width / this.xRange;
-        var yIncrement = canvas.height / this.yRange;
+        var xIncrement = (this.xRange * 2) / canvas.width;
+        var yIncrement = (this.yRange * 2) / canvas.height;
 		
-		// the x and y values for where the ray intersects the "screen", 
-		// initialized to point to the top left corner of the screen
-		var cartXValue = -xRange;
-		var cartYValue = yRange;
 		// the ray currently being processed
 		var currentRay;
 		
@@ -197,22 +212,26 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
         try 
 		{
 			// iterate down the canvas
-			for (y = 0; y < canvas.height; y++, cartYValue += yIncrement) 
-			{
+			var cartYValue = yRange;
+			for (var y = 0; y < canvas.height; y++, cartYValue -= yIncrement) 
+			{	
+				var cartXValue = -xRange;
 				// iterate across the canvas and fill in pixels with object
 				// colors or the background color depending on whether or not
 				// the generated ray intersects with any objects				
-				for (x = 0; x < canvas.width; x++, cartXValue += xIncrement) 
+				for (var x = 0; x < canvas.width; x++, cartXValue += xIncrement) 
 				{					
-					currentRay = generateRay(cartXValue, cartYValue);	
-					pixelColor = intersectRayWithScene(currentRay);	
+					//alert("cartxvalue = " + cartXValue);
+					var currentRay = this.generateScreenRay(cartXValue, cartYValue);	
+					//alert(currentRay);
+					var pixelColor = this.intersectRayWithScene(currentRay);	
 					
 					if(pixelColor != null)
 						context.fillStyle = pixelColor.asCanvasRGB();
 					else
-						contextFillStyle = backgroundColor;
+						context.fillStyle = bgColor;
 						
-					context.fillRect(y, x, 1, 1);
+					context.fillRect(x, y, 1, 1);
 				}
 			}
 		}
@@ -220,6 +239,8 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
 		{
 			alert(e);
 		}
+		
+		dumpLog();
     }
 	
 	/**
@@ -228,34 +249,38 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
 	 * 
 	 * @param {Object} ray the ray to intersect with the scene
 	 */
-	intersectRayWithScene = function(ray)	
+	this.intersectRayWithScene = function(ray)	
 	{
 		// keep track of the object closest to the view point
 		var closestObject = null;
 		// also keep track of the shortest intersection distance
 		var closestDistance = null;
 		
-		for(i = 0; i < objectsInScene.length; i++)
+		if(objectsInScene == null)
+			return;
+		
+		for(var i = 0; i < objectsInScene.length; i++)
 		{	
-			// points of intersection (could be more than 1 depending on the shape
-			intersectionPoints = objectsInScene[i].getIntersections(ray);
-			if(intersectionPoints != null)
+			// points of intersection (could be more than 1 depending on the shape)
+			var intersectionPoints = objectsInScene[i].getIntersections(ray);
+			if(intersectionPoints == null)
+				continue;
+			
+			for(var j = 0; j < intersectionPoints.length; j++)
 			{
-				for(j = 0; j < intersectionPoints.length; j++)
+				var intersectionPoint = intersectionPoints[j];
+				//(intersectionPoint + " " + ray.startingPoint);
+				var distance = getDistance(intersectionPoint, ray.startingPoint);
+				
+				if (closestDistance == null || (closestDistance != null && distance < closestDistance)) 
 				{
-					var intersectionPoint = intersectionPoints[j];
-					var distance = getDistance(intersectionPoint, ray.startingPoint);
-					
-					if (closestDistance == null || (closestDistance != null && distance < closestDistance)) 
-					{
-						closestDistance = distance;
-						closestObject = objectsInScene[i];
-					}
+					closestDistance = distance;
+					closestObject = objectsInScene[i];
 				}
 			}
 		}
 		
-		return closestObject == null ? null : closestObject.color;
+		return closestObject == null ? null : new Color(100,100,100);
 	}
 	
 	/**
@@ -267,12 +292,11 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
 	 * @param {Object} x
 	 * @param {Object} y
 	 */
-	generateScreenRay = function(x, y)
+	this.generateScreenRay = function(x, y)
 	{
 		var screenPoint = new Point(x, y, 0); // z value is 0 because we've strategically placed the screen on the 0 of z axis
-		                                      // can update this later
+		          //alert('view point = ' + this.viewPoint);                            // can update this later
 		var result = new Ray(this.viewPoint, screenPoint);
-		result.normalize();
 		return result;
 	}
 }
@@ -288,7 +312,7 @@ function getDistance(point1, point2)
     var squareDiffY = differenceSquare(point1.y, point2.y);
     var squareDiffZ = differenceSquare(point1.z, point2.z);
     
-    return Math.sqrt(squareDiffx + squareDiffY + squareDiffZ);
+    return Math.sqrt(squareDiffX + squareDiffY + squareDiffZ);
 }
 
 /**
@@ -298,14 +322,26 @@ function getDistance(point1, point2)
  */
 function differenceSquare(a, b)
 {
-    return Math.pow(point1.x - point2.x, 2);
+    return Math.pow(a.x - b.x, 2);
 }
 
 function dotProduct(v1, v2)
 {
-	var total;
-	total += v1.x * v2.x;
+	var total = v1.x * v2.x;
 	total += v1.y * v2.y;
 	total += v1.z * v2.z;
 	return total;
+}
+
+var buffer = "";
+function log(msg)
+{
+	//buffer += msg + "<br/>";
+}
+
+function dumpLog()
+{
+	var logDiv = document.getElementById("log");
+	logDiv.innerHTML = buffer;
+	buffer = "";
 }

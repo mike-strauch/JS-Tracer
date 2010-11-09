@@ -4,14 +4,20 @@
 <title>Ray Tracer test</title>
 <script language="JavaScript" src="tracer.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript">
-	var myTracer = new Tracer(0, 0, 0, null, null, "mycanvas");
+	var shapes = new Array();
+	//shapes.push(new Sphere(new Point(0,0,-10), 10.9, new Color(100,100,100)));
+	shapes.push(new Sphere(new Point(-10, 3, -10), 10, new Color(200, 0, 0)));
+	var myTracer = new Tracer(new Point(0, 0, 1), 20, 20, shapes, null, "mycanvas");
 	
 </script>
 </head>
 
 <body>
-<canvas id="mycanvas" width="300" height="300"></canvas>
-<button onclick="myTracer.rayTrace()">click to draw</button>
+	<canvas id="mycanvas" width="300" height="300"></canvas>
+	<button onclick="myTracer.rayTrace()">click to draw</button>
+	<div id="log">
+		<p>Log:</p>		
+	</div>
 </body>
 
 </html>
