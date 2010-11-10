@@ -15,6 +15,11 @@ function Color(r, g, b)
 	{
 		return 'rgb(' + r + ', ' + g + ', ' + b + ')';
 	}
+	
+	this.toString = function()	
+	{	
+		return "[" + this.r + ", " + this.g + ", " + this.b+ "]";
+	}
 }
 
 /**
@@ -74,85 +79,84 @@ function Shape(color)
      * Returns an array of Points (the ray could intersect with the shape more than once)
      * or null if the Ray does not intersect the shape.
      */
-    this.getIntersections = function(ray)
+	this.getIntersections = function(ray)
 	{
 		return null;
-    }
+	}
+
 }
 
-Sphere.prototype = new Shape();
+Sphere.prototype = new Shape;
 Sphere.prototype.constructor = Sphere;
 function Sphere(centerPoint, radius, color)
 {
-	//Shape.constructor.call(this, color);
+	Shape.call(this, color);
 	this.centerPoint = centerPoint;
 	this.radius = radius;
+
+	this.getIntersections = function(ray)
+	{
+		var result = new Array();
+		
+		// So, yeah, couldn't get it to work using vectors with dot products and stuff so, 
+		// you get the mess below this commented section
+		
+		/*var a = dotProduct(ray.directionPoint, ray.directionPoint);
+		//alert('ray in getIntersections' + ray);
+		var rayOriginMinusCenter = ray.startingPoint.minus(this.centerPoint);
+		var b = dotProduct(rayOriginMinusCenter.times(2), ray.directionPoint);
+		var c = dotProduct(rayOriginMinusCenter, rayOriginMinusCenter) - Math.pow(this.radius, 2);*/
+		
+		var i = ray.directionPoint.x - ray.startingPoint.x;
+		var j = ray.directionPoint.y - ray.startingPoint.y;
+		var k = ray.directionPoint.z - ray.startingPoint.z
+		
+		var a = Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2);
+		var b = 2 * i * (ray.startingPoint.x - this.centerPoint.x);
+		b += 2 * j * (ray.startingPoint.y - this.centerPoint.y);
+		b += 2 * k * (ray.startingPoint.z - this.centerPoint.z);
+		var c = Math.pow(this.centerPoint.x, 2) + Math.pow(this.centerPoint.y, 2) + Math.pow(this.centerPoint.z, 2);
+		c += Math.pow(ray.startingPoint.x, 2) + Math.pow(ray.startingPoint.y, 2) + Math.pow(ray.startingPoint.z, 2);
+		c += 2 * (-1 * this.centerPoint.x * ray.startingPoint.x - this.centerPoint.y * ray.startingPoint.y - this.centerPoint.z * ray.startingPoint.z)
+	    c -= Math.pow(this.radius, 2); 
+			
+		log("ray to intersect = " + ray);
+		log("a = " + a + ", b = " + b + ", c = " + c);
+	
+		var determinant = Math.sqrt(Math.pow(b, 2) - (4 * a * c));
+		
+		// if NaN then there are no roots
+		if (isNaN(determinant)) 
+		{
+			log("No Roots");
+			return null;
+		}
+		
+		var value1 = (-b + determinant) / (2 * a);
+		var value2 = (-b - determinant) / (2 * a);
+		
+	    log("Potential roots found: t values = " + value1 + ", " + value2);
+		
+		// we're only concerned with values that are positive, negative values
+		// indicate that the ray intersects with the object in the opposite direction
+		if(value1 > 0)
+			result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value1, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value1, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value1));
+	    if(value2 > 0)
+			result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value2, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value2, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value2));
+	
+		return result;
+	}
 }
 
 /**
  * Determines the intersection points between a ray and a sphere.
  * @param {Object} ray
  */
-Sphere.prototype.getIntersections = function(ray)
-{
-
-	var result = new Array();
-	
-	// So, yeah, couldn't get it to work using vectors with dot products and stuff so, 
-	// you get the mess below this commented section
-	
-	/*var a = dotProduct(ray.directionPoint, ray.directionPoint);
-	//alert('ray in getIntersections' + ray);
-	var rayOriginMinusCenter = ray.startingPoint.minus(this.centerPoint);
-	var b = dotProduct(rayOriginMinusCenter.times(2), ray.directionPoint);
-	var c = dotProduct(rayOriginMinusCenter, rayOriginMinusCenter) - Math.pow(this.radius, 2);*/
-	
-	var i = ray.directionPoint.x - ray.startingPoint.x;
-	var j = ray.directionPoint.y - ray.startingPoint.y;
-	var k = ray.directionPoint.z - ray.startingPoint.z
-	
-	var a = Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2);
-	var b = 2 * i * (ray.startingPoint.x - this.centerPoint.x);
-	b += 2 * j * (ray.startingPoint.y - this.centerPoint.y);
-	b += 2 * k * (ray.startingPoint.z - this.centerPoint.z);
-	var c = Math.pow(this.centerPoint.x, 2) + Math.pow(this.centerPoint.y, 2) + Math.pow(this.centerPoint.z, 2);
-	c += Math.pow(ray.startingPoint.x, 2) + Math.pow(ray.startingPoint.y, 2) + Math.pow(ray.startingPoint.z, 2);
-	c += 2 * (-1 * this.centerPoint.x * ray.startingPoint.x - this.centerPoint.y * ray.startingPoint.y - this.centerPoint.z * ray.startingPoint.z)
-    c -= Math.pow(this.radius, 2); 
-		
-	log("ray to intersect = " + ray);
-	log("a = " + a + ", b = " + b + ", c = " + c);
-
-	var determinant = Math.sqrt(Math.pow(b, 2) - (4 * a * c));
-	
-	// if NaN then there are no roots
-	if (isNaN(determinant)) 
-	{
-		log("No Roots");
-		return null;
-	}
-	
-	var value1 = (-b + determinant) / (2 * a);
-	var value2 = (-b - determinant) / (2 * a);
-	
-    log("Potential roots found: t values = " + value1 + ", " + value2);
-	
-	// we're only concerned with values that are positive, negative values
-	// indicate that the ray intersects with the object in the opposite direction
-	if(value1 > 0)
-		result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value1, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value1, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value1));
-    if(value2 > 0)
-		result.push(new Point(ray.startingPoint.x + (ray.directionPoint.x - ray.startingPoint.x) * value2, ray.startingPoint.y + (ray.directionPoint.y - ray.startingPoint.y) * value2, ray.startingPoint.z + (ray.directionPoint.z - ray.startingPoint.z) * value2));
-
-	return result;
-}
 
 function LightSource(location)
 {
 	this.location = location;
 }
-
-
 
 /**
  * Ray traces a scene described by the supplied parameters.
@@ -195,7 +199,7 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
             alert("No canvas with id " + canvasElementId + " exists");
             return;
         }        
-		alert(this.objectsInScene.length);
+		//alert(this.objectsInScene.length);
 		var context = canvas.getContext("2d");
         context.fillStyle = "#FF0000";
         
@@ -279,8 +283,8 @@ function Tracer(viewPoint, xRange, yRange, objectsInScene, lights, canvasElement
 				}
 			}
 		}
-		
-		return closestObject == null ? null : new Color(100,100,100);
+
+		return closestObject == null ? null : closestObject.color;
 	}
 	
 	/**

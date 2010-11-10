@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Ray Tracer test</title>
+<script language="JavaScript" src="tracer.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript">
+	var objects = new Array();
+	objects.push(new Sphere(new Point(0,0, -2), 1, new Color(100, 100, 100)));	
+	var tracer = new Tracer(null, 20, 20, objects, null, null);
+
+	try 
+	{
+		var result = tracer.intersectRayWithScene(new Ray(new Point(0, 0, 1), new Point(0, 0, 0)));
+	}
+	catch(e)
+	{
+		alert(e);
+	}
+
+	alert("result should be: 100,100,100, result is: " + result);
+
+</script>
+</head>
+
+<body>
+</body>
+
+</html>

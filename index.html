@@ -5,8 +5,9 @@
 <script language="JavaScript" src="tracer.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript">
 	var shapes = new Array();
-	//shapes.push(new Sphere(new Point(0,0,-10), 10.9, new Color(100,100,100)));
-	shapes.push(new Sphere(new Point(-10, 3, -10), 10, new Color(200, 0, 0)));
+	shapes.push(new Sphere(new Point(0,0,-10), 10.5, new Color(200,0,0)));
+	shapes.push(new Sphere(new Point(-10, 3, -10),10 , new Color(0, 200, 10)));
+	alert("shapes's color is : " + shapes[0].color)
 	var myTracer = new Tracer(new Point(0, 0, 1), 20, 20, shapes, null, "mycanvas");
 	
 </script>
