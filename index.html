@@ -6,16 +6,19 @@
 <script language="JavaScript" type="text/javascript">
 	var shapes = new Array();
 	shapes.push(new Sphere(new Point(0,0,-10), 10.5, new Color(200,0,0)));
-	shapes.push(new Sphere(new Point(-10, 3, -10),10 , new Color(0, 200, 10)));
-	alert("shapes's color is : " + shapes[0].color)
+	shapes.push(new Sphere(new Point(-15, 3, -10),10 , new Color(0, 200, 10)));
 	var myTracer = new Tracer(new Point(0, 0, 1), 20, 20, shapes, null, "mycanvas");
 	
 </script>
 </head>
 
 <body>
-	<canvas id="mycanvas" width="300" height="300"></canvas>
-	<button onclick="myTracer.rayTrace()">click to draw</button>
+	<div>
+		<canvas id="mycanvas" width="300" height="300"></canvas>
+	</div>
+	<div>
+		<button onclick="myTracer.rayTrace()">click to draw</button>
+	</div>
 	<div id="log">
 		<p>Log:</p>		
 	</div>
